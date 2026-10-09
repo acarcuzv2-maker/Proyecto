@@ -1,0 +1,30 @@
+# Variables de entorno y contraseñas
+.env
+.env.*
+
+# Permitir archivo de ejemplo
+!.env.example
+
+# Dependencias de Composer
+/vendor/
+
+# Archivos temporales
+/writable/cache/*
+/writable/logs/*
+/writable/session/*
+/writable/uploads/*
+/writable/debugbar/*
+
+# Mantener archivos index.html de protección
+!/writable/cache/index.html
+!/writable/logs/index.html
+!/writable/session/index.html
+!/writable/uploads/index.html
+!/writable/debugbar/index.html
+
+# Configuración del editor
+.vscode/
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
