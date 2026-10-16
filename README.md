@@ -52,3 +52,24 @@ El archivo `database.sql` contiene la estructura de las tablas necesarias para e
 ## Seguridad
 
 El sistema utiliza contraseñas cifradas mediante hash, sesiones de usuario y restricciones de acceso según los roles.
+
+## Acceso de administrador
+
+Por seguridad, las cuentas registradas inicialmente tienen el rol de usuario.
+
+Para habilitar una cuenta administrativa:
+
+1. Registrar una cuenta desde la aplicación.
+2. Activarla mediante el correo electrónico.
+3. Acceder a phpMyAdmin y seleccionar la base de datos.
+4. Ejecutar la siguiente consulta SQL:
+
+```sql
+UPDATE usuarios
+SET rol = 'admin'
+WHERE email = 'correo_del_administrador@ejemplo.com';
+```
+
+5. Cerrar sesión y volver a iniciar sesión.
+
+La cuenta tendrá acceso a las funcionalidades administrativas.
