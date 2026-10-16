@@ -1,0 +1,134 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: 'DM Sans', sans-serif;
+    background: #f8faff;
+    color: #26324a;
+}
+
+.navbar {
+    background: white;
+    border-bottom: 1px solid #e8edf5;
+    padding: 20px 7%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 25px;
+}
+
+.navIzquierda,
+.navDerecha {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+}
+
+.marca {
+    font-size: 20px;
+    font-weight: 700;
+    color: #3459a8;
+    text-decoration: none;
+    margin-right: 20px;
+}
+
+.idiomas {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.idiomas button {
+    border: none;
+    background: transparent;
+    color: #53627c;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 5px 0;
+}
+
+.idiomas button:hover,
+.idiomas button.activo {
+    color: #3459a8;
+}
+
+.idiomas button.activo {
+    font-weight: 700;
+}
+
+.navDerecha a {
+    text-decoration: none;
+    color: #53627c;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.navDerecha a:hover {
+    color: #3459a8;
+}
+
+.navDerecha .registro {
+    background: #3459a8;
+    color: white;
+    padding: 11px 19px;
+    border-radius: 8px;
+}
+
+@media (max-width: 750px) {
+    .navbar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .navIzquierda {
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .navDerecha {
+        gap: 20px;
+    }
+
+    .marca {
+        margin-right: 0;
+    }
+}
+
+.saludo {
+    font-size: 14px;
+    color: #53627c;
+    font-weight: 500;
+}
+
+.navDerecha form {
+    margin: 0;
+}
+
+.botonSalir {
+    background: transparent;
+    border: none;
+    color: #53627c;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0;
+}
+
+.botonSalir:hover {
+    color: #3459a8;
+}
+
+@media (max-width: 900px) {
+    .navbar {
+        flex-wrap: wrap;
+    }
+
+    .navDerecha {
+        flex-wrap: wrap;
+    }
+}

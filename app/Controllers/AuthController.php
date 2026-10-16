@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Models\UsuarioModel;
 use App\Models\CredencialTemporalModel;
 use App\Libraries\Blade;
+use App\Models\SesionRecordadaModel;
 
 class AuthController extends BaseController
 {
@@ -12,7 +13,7 @@ class AuthController extends BaseController
     {
         $motorVistas = new Blade();
 
-        return $motorVistas->render('auth.registro', [
+        return $motorVistas->render('auth.register', [
             'titulo' => 'Crear cuenta'
         ]);
     }
@@ -119,10 +120,10 @@ class AuthController extends BaseController
         $correoSalida = service('email');
 
         $correoSalida->setTo($correoDestino);
-        $correoSalida->setSubject('Activa tu cuenta - Organizador Escolar');
+        $correoSalida->setSubject('Activa tu cuenta - Basicos Mariano G');
 
         $correoSalida->setMessage(
-            '<h2>¡Bienvenido al Organizador Escolar!</h2>' .
+            '<h2>¡Bienvenido a Básicos Mariano G!</h2>' .
             '<p>Para activar tu cuenta, entra al siguiente enlace:</p>' .
             '<p><a href="' . esc($enlaceActivacion, 'attr') . '">Activar mi cuenta</a></p>' .
             '<p>Este enlace vence dentro de una hora.</p>'
@@ -175,11 +176,11 @@ class AuthController extends BaseController
             );
     }
 
-        public function iniciarSesion()
+    public function iniciarSesion()
     {
-        $motorVistas = new \App\Libraries\Blade();
+        $plantillas = new \App\Libraries\Blade();
 
-        return $motorVistas->render('auth.login', [
+        return $plantillas->render('auth.login', [
             'titulo' => 'Iniciar sesión'
         ]);
     }
@@ -192,7 +193,7 @@ class AuthController extends BaseController
 
         $claveIngresada = (string) $this->request->getPost('password');
 
-        $archivoUsuarios = new \App\Models\UsuarioModel();
+        $archivoUsuarios = new UsuarioModel();
 
         $cuentaEncontrada = $archivoUsuarios
             ->where('email', $correoIngresado)
@@ -206,17 +207,14 @@ class AuthController extends BaseController
             )
         ) {
             return redirect()
-                ->to('/login')
+                ->to(site_url('login'))
                 ->with('error', 'Correo o contraseña incorrectos.');
         }
 
         if ((int) $cuentaEncontrada['activo'] !== 1) {
             return redirect()
-                ->to('/login')
-                ->with(
-                    'error',
-                    'Debes activar tu cuenta desde el correo electrónico.'
-                );
+                ->to(site_url('login'))
+                ->with('error', 'Debes activar tu cuenta desde el correo electrónico.');
         }
 
         session()->regenerate();
@@ -228,16 +226,248 @@ class AuthController extends BaseController
             'sesion_activa' => true
         ]);
 
-        return redirect()->to('/panel');
+        if ($this->request->getPost('recordarme') === '1') {
+            $claveRecordada = bin2hex(random_bytes(32));
+
+            $archivoSesiones = new SesionRecordadaModel();
+
+            $resultadoGuardado = $archivoSesiones->insert([
+                'usuario_id' => $cuentaEncontrada['id'],
+                'token_hash' => hash('sha256', $claveRecordada),
+                'expira_en' => date('Y-m-d H:i:s', time() + 604800)
+            ]);
+
+            if ($resultadoGuardado !== false) {
+                $claveAnterior = (string) $this->request->getCookie('sesion_recordada');
+
+                if ($claveAnterior !== '') {
+                    $archivoSesiones = new SesionRecordadaModel();
+
+                    $archivoSesiones
+                        ->where('token_hash', hash('sha256', $claveAnterior))
+                        ->delete();
+                }
+
+                $respuesta = redirect()->to(site_url('panel'));
+
+                $respuesta->setCookie(
+                    'sesion_recordada',
+                    '',
+                    -3600,
+                    '',
+                    '/',
+                    '',
+                    $this->request->isSecure(),
+                    true,
+                    'Lax'
+                );
+
+                return $respuesta;
+            }
+        }
+
+        return redirect()->to(site_url('panel'));
     }
 
     public function cerrarSesion()
     {
-        // Eliminamos los datos de autenticación.
+        $claveGuardada = (string) $this->request->getCookie('sesion_recordada');
+
+        if ($claveGuardada !== '') {
+            $archivoSesiones = new SesionRecordadaModel();
+
+            $archivoSesiones
+                ->where('token_hash', hash('sha256', $claveGuardada))
+                ->delete();
+        }
+
         session()->destroy();
 
-        return redirect()->to('/login');
+        $respuesta = redirect()->to(site_url('login'));
+
+        $respuesta->setCookie(
+            'sesion_recordada',
+            '',
+            -3600,
+            '',
+            '/',
+            '',
+            $this->request->isSecure(),
+            true,
+            'Lax'
+        );
+
+        return $respuesta;
+    }
+            
+    public function pedirRecuperacion()
+    {
+        $motorVistas = new Blade();
+
+        return $motorVistas->render('auth.forgot_password');
     }
 
-        
+    public function enviarRecuperacion()
+    {
+        $correoBuscado = strtolower(
+            trim((string) $this->request->getPost('email'))
+        );
+
+        if (! filter_var($correoBuscado, FILTER_VALIDATE_EMAIL)) {
+            return redirect()
+                ->to('/recuperar')
+                ->with('error', 'Ingresa un correo electrónico válido.');
+        }
+
+        $archivoUsuarios = new UsuarioModel();
+
+        $cuentaEncontrada = $archivoUsuarios
+            ->where('email', $correoBuscado)
+            ->where('activo', 1)
+            ->first();
+
+        $avisoGeneral = 'Si el correo está registrado y activo, recibirás un enlace para recuperar tu contraseña.';
+
+        if (! $cuentaEncontrada) {
+            return redirect()
+                ->to('/recuperar')
+                ->with('mensaje', $avisoGeneral);
+        }
+
+        try {
+            $archivoClaves = new CredencialTemporalModel();
+
+            $archivoClaves
+                ->where('usuario_id', $cuentaEncontrada['id'])
+                ->where('tipo', 'recuperacion')
+                ->delete();
+
+            $claveNueva = bin2hex(random_bytes(32));
+
+            $resultadoClave = $archivoClaves->insert([
+                'usuario_id' => $cuentaEncontrada['id'],
+                'token_hash' => hash('sha256', $claveNueva),
+                'tipo' => 'recuperacion',
+                'expira_en' => date('Y-m-d H:i:s', time() + 3600)
+            ]);
+
+            if ($resultadoClave === false) {
+                throw new \RuntimeException('No se pudo guardar la clave temporal.');
+            }
+
+            $enlaceNuevo = site_url(
+                'restablecer/' . rawurlencode($claveNueva)
+            );
+
+            $correoSalida = service('email');
+
+            $correoSalida->setTo($correoBuscado);
+            $correoSalida->setSubject('Recupera tu contraseña - Básicos Mariano G');
+
+            $correoSalida->setMessage(
+                '<h2>Recuperación de contraseña</h2>' .
+                '<p>Recibimos una solicitud para cambiar tu contraseña.</p>' .
+                '<p><a href="' . esc($enlaceNuevo, 'attr') . '">Crear nueva contraseña</a></p>' .
+                '<p>Este enlace vence dentro de una hora.</p>' .
+                '<p>Si no solicitaste este cambio, puedes ignorar el mensaje.</p>'
+            );
+
+            if (! $correoSalida->send()) {
+                throw new \RuntimeException('No se pudo enviar el correo.');
+            }
+        } catch (\Throwable $problemaCorreo) {
+            log_message(
+                'error',
+                'Recuperación de contraseña: ' . $problemaCorreo->getMessage()
+            );
+        }
+
+        return redirect()
+            ->to('/recuperar')
+            ->with('mensaje', $avisoGeneral);
+    }
+
+    public function mostrarNuevaClave(string $claveRecibida)
+    {
+        $archivoClaves = new CredencialTemporalModel();
+
+        $registroClave = $archivoClaves
+            ->where('token_hash', hash('sha256', $claveRecibida))
+            ->where('tipo', 'recuperacion')
+            ->first();
+
+        if (! $registroClave || strtotime($registroClave['expira_en']) <= time()) {
+            return redirect()
+                ->to('/recuperar')
+                ->with('error', 'El enlace no es válido o ha vencido.');
+        }
+
+        $motorVistas = new Blade();
+
+        return $motorVistas->render('auth.reset_password', [
+            'claveRecibida' => $claveRecibida
+        ]);
+    }
+
+    public function guardarNuevaClave()
+    {
+        $claveRecibida = (string) $this->request->getPost('clave_temporal');
+        $contrasenaNueva = (string) $this->request->getPost('password');
+        $confirmacionNueva = (string) $this->request->getPost('confirmar_password');
+
+        $archivoClaves = new CredencialTemporalModel();
+
+        $registroClave = $archivoClaves
+            ->where('token_hash', hash('sha256', $claveRecibida))
+            ->where('tipo', 'recuperacion')
+            ->first();
+
+        if (! $registroClave || strtotime($registroClave['expira_en']) <= time()) {
+            return redirect()
+                ->to('/recuperar')
+                ->with('error', 'El enlace no es válido o ha vencido.');
+        }
+
+        if (strlen($contrasenaNueva) < 8) {
+            return redirect()
+                ->to('/restablecer/' . rawurlencode($claveRecibida))
+                ->with('error', 'La contraseña debe tener al menos 8 caracteres.');
+        }
+
+        if ($contrasenaNueva !== $confirmacionNueva) {
+            return redirect()
+                ->to('/restablecer/' . rawurlencode($claveRecibida))
+                ->with('error', 'Las contraseñas no coinciden.');
+        }
+
+        $archivoUsuarios = new UsuarioModel();
+
+        $resultadoCambio = $archivoUsuarios->update(
+            $registroClave['usuario_id'],
+            [
+                'password' => password_hash(
+                    $contrasenaNueva,
+                    PASSWORD_DEFAULT
+                )
+            ]
+        );
+
+        if ($resultadoCambio === false) {
+            return redirect()
+                ->to('/restablecer/' . rawurlencode($claveRecibida))
+                ->with('error', 'No pudimos actualizar tu contraseña.');
+        }
+
+        $archivoSesiones = new \App\Models\SesionRecordadaModel();
+
+        $archivoSesiones
+            ->where('usuario_id', $registroClave['usuario_id'])
+            ->delete();
+        $archivoClaves->delete($registroClave['id']);
+
+        return redirect()
+            ->to('/login')
+            ->with('mensaje', 'Tu contraseña fue actualizada. Ya puedes iniciar sesión.');
+    }
+
 }
