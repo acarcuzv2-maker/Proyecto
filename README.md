@@ -1,61 +1,54 @@
-# CodeIgniter 4 Framework
+# Básicos Mariano G.
 
-## What is CodeIgniter?
+## Descripción
 
-CodeIgniter is a PHP full-stack web framework that is light, fast, flexible and secure.
-More information can be found at the [official site](https://codeigniter.com).
+Básicos Mariano G. es una aplicación web desarrollada con codeigniter 4, para la entrega del proyecto de el curso de algoritmos, brinda las opciones necesesarias para cubrir el enunciado de practica
 
-This repository holds the distributable version of the framework.
-It has been built from the
-[development repository](https://github.com/codeigniter4/CodeIgniter4).
+## Se utilizó los siguientes programas:
 
-More information about the plans for version 4 can be found in [CodeIgniter 4](https://forum.codeigniter.com/forumdisplay.php?fid=28) on the forums.
+- PHP 
+- CodeIgniter 4
+- BladeOne
+- MySQL
+- HTML5
+- CSS3
+- JavaScript
+- XAMPP
+- Git y GitHub
 
-You can read the [user guide](https://codeigniter.com/user_guide/)
-corresponding to the latest version of the framework.
 
-## Important Change with index.php
 
-`index.php` is no longer in the root of the project! It has been moved inside the *public* folder,
-for better security and separation of components.
+## Requisitos
 
-This means that you should configure your web server to "point" to your project's *public* folder, and
-not to the project root. A better practice would be to configure a virtual host to point there. A poor practice would be to point your web server to the project root and expect to enter *public/...*, as the rest of your logic and the
-framework are exposed.
+- PHP 8.2 o superior.
+- Composer.
+- MySQL.
+- Apache.
+- Extensiones de PHP requeridas por CodeIgniter 4.
 
-**Please** read the user guide for a better explanation of how CI4 works!
+## Instalación
 
-## Repository Management
+1. Clonar o descargar este repositorio.
+2. Colocar el proyecto en un servidor compatible con PHP.
+3. Abrir una terminal dentro de la carpeta del proyecto.
+4. Instalar las dependencias:
 
-We use GitHub issues, in our main repository, to track **BUGS** and to track approved **DEVELOPMENT** work packages.
-We use our [forum](http://forum.codeigniter.com) to provide SUPPORT and to discuss
-FEATURE REQUESTS.
+```bash
+composer install
+```
 
-This repository is a "distribution" one, built by our release preparation script.
-Problems with it can be raised on our forum, or as issues in the main repository.
+5. Crear una base de datos en MySQL.
+6. Importar el archivo `database.sql`.
+7. Crear un archivo `.env` a partir de `env` y configurar la conexión a la base de datos.
+8. Configurar las credenciales SMTP para habilitar los correos de activación y recuperación.
+9. Configurar Apache para que el directorio público del proyecto sea `public/`.
+10. Iniciar Apache y MySQL y acceder a la aplicación desde el navegador.
 
-## Contributing
+## Base de datos
 
-We welcome contributions from the community.
+El archivo `database.sql` contiene la estructura de las tablas necesarias para el funcionamiento del sistema.
 
-Please read the [*Contributing to CodeIgniter*](https://github.com/codeigniter4/CodeIgniter4/blob/develop/CONTRIBUTING.md) section in the development repository.
 
-## Server Requirements
+## Seguridad
 
-PHP version 8.2 or higher is required, with the following extensions installed:
-
-- [intl](http://php.net/manual/en/intl.requirements.php)
-- [mbstring](http://php.net/manual/en/mbstring.installation.php)
-
-> [!WARNING]
-> - The end of life date for PHP 7.4 was November 28, 2022.
-> - The end of life date for PHP 8.0 was November 26, 2023.
-> - The end of life date for PHP 8.1 was December 31, 2025.
-> - If you are still using below PHP 8.2, you should upgrade immediately.
-> - The end of life date for PHP 8.2 will be December 31, 2026.
-
-Additionally, make sure that the following extensions are enabled in your PHP:
-
-- json (enabled by default - don't turn it off)
-- [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) if you plan to use MySQL
-- [libcurl](http://php.net/manual/en/curl.requirements.php) if you plan to use the HTTP\CURLRequest library
+El sistema utiliza contraseñas cifradas mediante hash, sesiones de usuario y restricciones de acceso según los roles.
